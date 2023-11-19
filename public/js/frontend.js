@@ -33,7 +33,8 @@ const keys = {
   }
 };
 let lastKey = '';
-const SPEED = 10;
+const SPEED = 5;
+const PROJECTILE_RADIUS = 2.5;
 const playerInputs = [];
 
 socket.on('updateProjectiles', (backEndProjectiles) => {
@@ -43,7 +44,7 @@ socket.on('updateProjectiles', (backEndProjectiles) => {
       frontEndProjectiles[id] = new Projectile({
         x: backEndProjectile.x,
         y: backEndProjectile.y,
-        radius: 5,
+        radius: PROJECTILE_RADIUS,
         color: frontEndPlayers[backEndProjectile.playerId]?.color || 'white',
         velocity: backEndProjectile.velocity
       });
@@ -98,26 +99,20 @@ socket.on('updatePlayers', (backendPlayers) => {
         parentsDiv.appendChild(item);
       });
 
+      frontEndPlayers[id].target = {
+        x: backendPlayer.x,
+        y: backendPlayer.y
+      };
+
       if (id === socket.id) {
         // if a player is already exists
-        frontEndPlayers[id].x = backendPlayer.x;
-        frontEndPlayers[id].y = backendPlayer.y;
-
         const lastBEInputIndex = playerInputs.findIndex(
           (input) => input.sequenceNumber === backendPlayer.sequenceNumber
         );
         if (lastBEInputIndex) playerInputs.splice(0, lastBEInputIndex + 1);
         playerInputs.forEach((input) => {
-          frontEndPlayers[id].x += input.dx;
-          frontEndPlayers[id].y += input.dy;
-        });
-      } else {
-        // for all other player
-        gsap.to(frontEndPlayers[id], {
-          x: backendPlayer.x,
-          y: backendPlayer.y,
-          duration: 0.015,
-          ease: 'linear'
+          frontEndPlayers[id].target.x += input.dx;
+          frontEndPlayers[id].target.y += input.dy;
         });
       }
     }
@@ -140,12 +135,21 @@ socket.on('updatePlayers', (backendPlayers) => {
 let animationId;
 function animate() {
   animationId = requestAnimationFrame(animate);
-  // c.fillStyle = 'rgba(0, 0, 0, 0.1)';
-  // c.fillRect(0, 0, canvas.width, canvas.height);
-  c.clearRect(0, 0, canvas.width, canvas.height);
+  c.fillStyle = 'rgba(0, 0, 0, 0.1)';
+  c.fillRect(0, 0, canvas.width, canvas.height);
+  // c.clearRect(0, 0, canvas.width, canvas.height);
 
   for (const id in frontEndPlayers) {
     const frontEndPlayer = frontEndPlayers[id];
+
+    // linear interpolation
+    if (frontEndPlayer.target) {
+      frontEndPlayers[id].x +=
+        (frontEndPlayers[id].target.x - frontEndPlayers[id].x) * 0.5
+      frontEndPlayers[id].y +=
+        (frontEndPlayers[id].target.y - frontEndPlayers[id].y) * 0.5
+    }
+
     frontEndPlayer.draw();
   }
 
@@ -153,10 +157,6 @@ function animate() {
     const frontEndProjectile = frontEndProjectiles[id];
     frontEndProjectile.draw();
   }
-
-  // for(let i = frontEndProjectiles.length - 1; i >= 0; i--) {
-  //   frontEndProjectiles[i].update();
-  // }
 }
 
 animate();
@@ -166,25 +166,25 @@ setInterval(() => {
   if (keys.a.pressed) {
     sequenceNumber++;
     playerInputs.push({ sequenceNumber, dx: -SPEED, dy: 0 });
-    frontEndPlayers[socket.id].x -= SPEED;
+    // frontEndPlayers[socket.id].x -= SPEED;
     socket.emit('keydown', { key: 'a', sequenceNumber });
   }
   if (keys.d.pressed) {
     sequenceNumber++;
     playerInputs.push({ sequenceNumber, dx: SPEED, dy: 0 });
-    frontEndPlayers[socket.id].x += SPEED;
+    // frontEndPlayers[socket.id].x += SPEED;
     socket.emit('keydown', { key: 'd', sequenceNumber });
   }
   if (keys.w.pressed) {
     sequenceNumber++;
     playerInputs.push({ sequenceNumber, dx: 0, dy: -SPEED });
-    frontEndPlayers[socket.id].y -= SPEED;
+    // frontEndPlayers[socket.id].y -= SPEED;
     socket.emit('keydown', { key: 'w', sequenceNumber });
   }
   if (keys.s.pressed) {
     sequenceNumber++;
     playerInputs.push({ sequenceNumber, dx: 0, dy: SPEED });
-    frontEndPlayers[socket.id].y += SPEED;
+    // frontEndPlayers[socket.id].y += SPEED;
     socket.emit('keydown', { key: 's', sequenceNumber });
   }
 }, 15);

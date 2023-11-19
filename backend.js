@@ -15,9 +15,9 @@ app.get('/', (req, res) => {
 
 const backEndPlayers = {};
 const backEndProjectiles = {};
-const SPEED = 10;
+const SPEED = 5;
 const PLAYER_RADIUS = 10;
-const PROJECTILE_RADIUS = 5;
+const PROJECTILE_RADIUS = 2.5;
 
 let projectileID = 0;
 io.on('connection', (socket) => {
@@ -27,8 +27,8 @@ io.on('connection', (socket) => {
     projectileID++;
 
     const velocity = {
-      x: Math.cos(angle) * 5,
-      y: Math.sin(angle) * 5
+      x: Math.cos(angle) * 2.5,
+      y: Math.sin(angle) * 2.5
     };
     backEndProjectiles[projectileID] = {
       x,
@@ -60,6 +60,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('keydown', ({ key, sequenceNumber }) => {
+    if (!backEndPlayers[socket.id]) return;
     backEndPlayers[socket.id].sequenceNumber = sequenceNumber;
     switch (key) {
       case 'a':
