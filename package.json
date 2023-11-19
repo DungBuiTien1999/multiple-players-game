@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "dev": "nodemon backend.js"
+    "dev": "nodemon backend.js",
+    "start": "node backend.js"
   },
   "dependencies": {
     "express": "4.18.2",
